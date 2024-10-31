@@ -1,0 +1,25 @@
+version: '3.9'
+
+services:
+  web:
+    build:
+      context: ../../..
+      dockerfile: build_env/docker-compose/local/Dockerfile
+    command: ash -c "python main.py"
+    volumes:
+      - ../../../app:/usr/src/app/
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  db:
+    image: postgres:14-alpine
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env

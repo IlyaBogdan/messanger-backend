@@ -2,14 +2,17 @@ from sqlalchemy import Boolean, Column, Integer, String, Table, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 
+"""
+Model for users representation
+"""
 class User(Base):
     __tablename__ = 'users'
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
-    password = Column(String(length=255))
-    is_deleted = Column(Boolean, default=False)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    username = Column(String, unique=True, index=True, comment="The username chosen by the user")
+    email = Column(String, unique=True, index=True, comment="User's email address")
+    password = Column(String(length=255), comment="User's password")
+    is_deleted = Column(Boolean, default=False, comment="Soft delete for model")
 
     friends = relationship(
         "User",
