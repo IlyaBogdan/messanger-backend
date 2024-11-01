@@ -1,12 +1,15 @@
 from typing import List
 from database import get_db
 from sqlalchemy.orm import Session
+from fastapi.security import OAuth2PasswordBearer
 from fastapi import APIRouter, Depends, HTTPException
 
+from modules.v1.models.user import User
 from modules.v1.dto.user import UserBase, AddFriend
 from modules.v1.services import user as UserService
 from modules.v1.services import auth as AuthService
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="v1/auth/login")
 router = APIRouter()    
 
 @router.get(
@@ -15,7 +18,11 @@ router = APIRouter()
     summary="Get user by ID",
     response_model=UserBase
 )
-async def get(id: int, db: Session = Depends(get_db)):
+async def get(
+    id: int,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
     user = UserService.get_user(id, db)
     if user:
         return user
@@ -28,7 +35,11 @@ async def get(id: int, db: Session = Depends(get_db)):
     summary="Change user info",
     response_model=UserBase
 )
-async def update(data: UserBase, db: Session = Depends(get_db)):
+async def update(
+    data: UserBase,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
     user = UserService.update(data, db)
     if user:
         return user
@@ -42,7 +53,11 @@ async def update(data: UserBase, db: Session = Depends(get_db)):
     description="Soft removal is used",
     response_model=UserBase
 )
-async def delete(id: int, db: Session = Depends(get_db)):
+async def delete(
+    id: int,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
     user = UserService.remove(id, db)
     if user:
         return user
@@ -55,7 +70,11 @@ async def delete(id: int, db: Session = Depends(get_db)):
     summary="Get user friends",
     response_model=List[UserBase]
 )
-async def friends(db: Session = Depends(get_db), user: dict = Depends(AuthService.get_current_user)):
+async def friends(
+    db: Session = Depends(get_db),
+    user: User = Depends(AuthService.get_current_user),
+    token: str = Depends(oauth2_scheme)
+):
     return user.friends
 
 @router.post(
@@ -64,7 +83,12 @@ async def friends(db: Session = Depends(get_db), user: dict = Depends(AuthServic
     summary="Add user to friends",
     response_model=dict
 )
-async def add_to_friends(data: AddFriend, db: Session = Depends(get_db), user: dict = Depends(AuthService.get_current_user)):
+async def add_to_friends(
+    data: AddFriend,
+    db: Session = Depends(get_db),
+    user: User = Depends(AuthService.get_current_user),
+    token: str = Depends(oauth2_scheme)
+):
     if data.friend_id != user.id:
         friend = UserService.get_user(data.friend_id, db)
         if not friend:
@@ -78,7 +102,12 @@ async def add_to_friends(data: AddFriend, db: Session = Depends(get_db), user: d
     summary="Delete user from friend list",
     response_model=dict
 )
-async def delete_friend(data: AddFriend, db: Session = Depends(get_db), user: dict = Depends(AuthService.get_current_user)):
+async def delete_friend(
+    data: AddFriend,
+    db: Session = Depends(get_db),
+    user: User = Depends(AuthService.get_current_user),
+    token: str = Depends(oauth2_scheme)
+):
     if data.friend_id != user.id:
         friend = UserService.get_user(data.friend_id, db)
         if not friend:
