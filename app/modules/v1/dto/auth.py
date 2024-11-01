@@ -19,3 +19,18 @@ class AuthResponse(BaseModel):
 
 class RefreshToken(BaseModel):
     refreshToken: str = Field(description="Refresh token", examples=["eyJhbGciOiJJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzb21lZW1haWwxQGdtYWlsLmNvbSIsImV4cCIaeTc1A"])
+
+class ResetPasswordInit(BaseModel):
+    email: EmailStr = Field(description="User's email", examples=["someemail@email.com"])
+    
+class ChangePassword(BaseModel):
+    new_password: str = Field(description="User's password", examples=["Secutity&123"])
+    reset_token: str
+
+    @field_validator('new_password')
+    def value_must_match_regex(cls, new_password):
+        regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+        if not re.match(regex, new_password):
+            raise ValueError('Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character')
+
+        return new_password

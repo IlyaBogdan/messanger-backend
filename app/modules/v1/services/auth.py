@@ -1,4 +1,5 @@
 import jwt
+import uuid
 from os import environ
 from sqlalchemy import exc
 from typing import Optional
@@ -12,6 +13,8 @@ from fastapi import HTTPException, status, Request, Depends
 from modules.v1.dto import auth
 from database import get_db
 from modules.v1.models.user import User
+from modules.v1.services import user as UserService
+from modules.v1.models.reset_token import ResetToken
 
 
 SECRET_KEY = environ.get("SECRET_KEY")
@@ -192,3 +195,50 @@ def refresh_token(data: auth.RefreshToken, db: Session) -> auth.AuthResponse:
         data={"sub": user.email}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     return auth.AuthResponse(accessToken=access_token, refreshToken=data.refreshToken)
+
+def init_reset_password(data: auth.ResetPasswordInit, db: Session) -> bool:
+    """Init reset password process
+    Sends reset password link to email
+
+    Parameters
+    ----------
+    data: auth.ResetPasswordInit
+        User's email
+    db: Session
+        Database connection
+    """
+    user = db.query(User).filter(User.email == data.email).first()
+    if user:
+        reset_token = ResetToken()
+        reset_token.user_id = user.id
+        reset_token.expired_date = datetime.now(timezone.utc) + timedelta(days=1)
+        reset_token.token = uuid.uuid4()
+        db.add(reset_token)
+        db.commit()
+        db.refresh(reset_token)
+
+        # TODO: send link to email
+
+    return True
+    
+def change_password(data: auth.ChangePassword, db: Session) -> bool:
+    """Change current user password
+
+    Parameters
+    ----------
+    data: auth.ChangePassword
+        New user's password
+    db: Session
+        Database connection
+    """
+    reset_token = db.query(ResetToken).filter(ResetToken.token == data.reset_token).first()
+    if reset_token:
+        user = UserService.get_user(reset_token.user_id, db)
+        user.password = get_password_hash(data.new_password)
+        db.delete(reset_token)
+        for token in db.query(ResetToken).filter(ResetToken.user_id == user.id).all():
+            db.delete(token)
+
+        db.commit()
+
+    return True

@@ -33,3 +33,21 @@ async def registration(data: auth.AuthRequest, db: Session = Depends(get_db)):
 )
 async def refresh_token(data: auth.RefreshToken, db: Session = Depends(get_db)):
     return AuthService.refresh_token(data, db)
+
+@router.post(
+    path='/v1/auth/password/init-reset',
+    tags={"ResetPassword"},
+    summary="Init reset password process",
+    response_model=dict
+)
+async def init_reset_password(data: auth.ResetPasswordInit, db: Session = Depends(get_db)):
+    return { "success": AuthService.init_reset_password(data, db) }
+
+@router.post(
+    path='/v1/auth/password/change',
+    tags={"ResetPassword"},
+    summary="Change password",
+    response_model=dict
+)
+async def change_password(data: auth.ChangePassword, db: Session = Depends(get_db)):
+    return { "success": AuthService.change_password(data, db) }

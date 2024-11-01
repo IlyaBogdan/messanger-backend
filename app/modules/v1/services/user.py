@@ -32,7 +32,6 @@ def update(data: UserBase, db: Session) -> Optional[User]:
     if user:
         user.name = data.name
         user.email = data.email
-        db.add(user)
         db.commit()
         db.refresh(user)
 
