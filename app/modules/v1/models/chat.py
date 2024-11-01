@@ -1,5 +1,6 @@
 from database import Base
 from sqlalchemy.orm import relationship
+from modules.v1.models.chat_event import ChatEvent
 from sqlalchemy import Boolean, Column, Integer, String, Table, ForeignKey
 
 """
@@ -17,7 +18,7 @@ class Chat(Base):
         "ChatEvent",
         secondary="events_association",
         primaryjoin="Chat.id==events_association.c.chat_id",
-        backref="chat",
+        backref="chat_events",
     )
 
     """List of users in this chat"""
