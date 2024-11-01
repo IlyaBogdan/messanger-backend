@@ -7,3 +7,5 @@ psycopg2-binary==2.9.10
 email_validator==2.2.0
 pytest==8.3.3
 alembic==1.13.3
+pyjwt==2.9.0
+passlib[bcrypt]

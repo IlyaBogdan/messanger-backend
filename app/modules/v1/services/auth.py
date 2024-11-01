@@ -1,35 +1,172 @@
 import hashlib
-from fastapi import HTTPException
+from datetime import datetime, timedelta, timezone
+from os import environ
+from typing import Annotated
+import jwt
+from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy import exc
 from typing import Optional
 from sqlalchemy.orm import Session
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jwt.exceptions import InvalidTokenError
+from passlib.context import CryptContext
+
 from modules.v1.dto import auth
 from modules.v1.models.user import User
 
+SECRET_KEY = environ.get("SECRET_KEY")
+ALGORITHM = environ.get("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(environ.get("ACCESS_TOKEN_EXPIRE_MINUTES"))
+REFRESH_TOKEN_EXPIRE_DAYS = int(environ.get("REFRESH_TOKEN_EXPIRE_DAYS"))
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+def create_token(data: dict, expires_delta: timedelta):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def verify_token(token: str, db: Session):
+    """Verify access token
+
+    Parameters
+    ----------
+    token: str
+        User's access token
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except InvalidTokenError:
+        raise credentials_exception
+    
+    user = db.query(User).filter(User.email == email).first()
+    if user is None:
+        raise credentials_exception
+    
+    return user
+
 def authorize(user: User) -> auth.AuthResponse:
-    auth_data = auth.AuthResponse(accessToken="asdasdas", refreshToken="sadasata")
-    return auth_data
+    """User authorization
+
+    Parameters
+    ----------
+    user: User
+        User for authorization
+    """
+
+    access_token = create_token(
+        data={"sub": user.email}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    refresh_token = create_token(
+        data={"sub": user.email}, expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    )
+
+    return auth.AuthResponse(accessToken=access_token, refreshToken=refresh_token)
 
 def login(data: auth.AuthRequest, db: Session) -> Optional[auth.AuthResponse]:
-    email = data.email
-    password = hashlib.md5(data.password.encode('utf-8')).hexdigest()
-    user = db.query(User).filter(User.email==email, User.password==password, User.is_deleted==False).first()
-    if user:
-        return authorize(user)
-    raise HTTPException(status_code=401, detail="Invalid email or password")
+    """Method for user login
+
+    Check user credentionals and authorize him
+
+    Parameters
+    ----------
+    data: auth.AuthRequest
+        User's email and plain password
+    db: Session
+        Database connection
+
+    Raises
+    ------
+    HTTPException: 401
+        If user with given email or password not exists
+
+    """
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user or not verify_password(data.password, user.password):
+        raise HTTPException(status_code=401, detail="Incorrect username or password")
+    
+    return authorize(user)
+
 
 def registration(data: auth.AuthRequest, db: Session) -> Optional[auth.AuthResponse]:
+    """Method for user registration
+
+    Register new user and authorize him
+
+    Parameters
+    ----------
+    data: auth.AuthRequest
+        User's email and plain password
+    db: Session
+        Database connection
+
+    Raises
+    ------
+    HTTPException: 409
+        If user with given email already exists
+
+    """
     user = User()
     user.email = data.email
-    user.password = hashlib.md5(data.password.encode('utf-8')).hexdigest()
+    user.password = get_password_hash(data.password)
     try:
         db.add(user)
         db.commit()
         db.refresh(user)
         return authorize(user)
     except exc.IntegrityError:
-        raise HTTPException(status_code=409, detail=f"User with email {data.email} already exists")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"User with email {data.email} already exists")
 
 def refresh_token(data: auth.RefreshToken, db: Session) -> auth.AuthResponse:
-    auth_data = auth.AuthResponse(accessToken="asdasdas", refreshToken="sadasata")
-    return auth_data
+    """Refresh expired access token
+
+    Parameters
+    ----------
+    data: auth.RefreshToken
+        User's refresh token
+    db: Session
+        Database connection
+
+    Raises
+    ------
+    HTTPException: 409
+        If user with given email already exists
+
+    """
+    try:
+        payload = jwt.decode(data.refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+    except InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+    
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    access_token = create_token(
+        data={"sub": user.email}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    return auth.AuthResponse(accessToken=access_token, refreshToken=data.refresh_token)

@@ -1,7 +1,8 @@
 version: '3.9'
 
 services:
-  web:
+  chat:
+    container_name: chat_api
     build:
       context: ../../..
       dockerfile: build_env/docker-compose/local/Dockerfile
@@ -16,6 +17,7 @@ services:
       - db
 
   db:
+    container_name: chat_db
     image: postgres:14-alpine
     volumes:
       - ./postgres:/var/lib/postgresql/data
