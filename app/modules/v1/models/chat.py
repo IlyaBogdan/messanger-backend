@@ -1,6 +1,6 @@
-from sqlalchemy import Boolean, Column, Integer, String, Table, ForeignKey
-from sqlalchemy.orm import relationship
 from database import Base
+from sqlalchemy.orm import relationship
+from sqlalchemy import Boolean, Column, Integer, String, Table, ForeignKey
 
 """
 Model for chats representation

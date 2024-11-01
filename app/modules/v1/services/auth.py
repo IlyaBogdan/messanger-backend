@@ -1,18 +1,17 @@
-import hashlib
-from datetime import datetime, timedelta, timezone
-from os import environ
-from typing import Annotated
 import jwt
-from fastapi import Depends, FastAPI, HTTPException, status
+from os import environ
 from sqlalchemy import exc
 from typing import Optional
 from sqlalchemy.orm import Session
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jwt.exceptions import InvalidTokenError
 from passlib.context import CryptContext
+from fastapi import HTTPException, status
+from jwt.exceptions import InvalidTokenError
+from fastapi.security import OAuth2PasswordBearer
+from datetime import datetime, timedelta, timezone
 
 from modules.v1.dto import auth
 from modules.v1.models.user import User
+
 
 SECRET_KEY = environ.get("SECRET_KEY")
 ALGORITHM = environ.get("ALGORITHM")
@@ -155,7 +154,7 @@ def refresh_token(data: auth.RefreshToken, db: Session) -> auth.AuthResponse:
 
     """
     try:
-        payload = jwt.decode(data.refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(data.refreshToken, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             raise HTTPException(status_code=401, detail="Invalid refresh token")
@@ -169,4 +168,4 @@ def refresh_token(data: auth.RefreshToken, db: Session) -> auth.AuthResponse:
     access_token = create_token(
         data={"sub": user.email}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    return auth.AuthResponse(accessToken=access_token, refreshToken=data.refresh_token)
+    return auth.AuthResponse(accessToken=access_token, refreshToken=data.refreshToken)

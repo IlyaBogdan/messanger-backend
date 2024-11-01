@@ -1,7 +1,7 @@
-from sqlalchemy import Boolean, Column, Integer, ForeignKey, Enum, Table
-from sqlalchemy.orm import relationship
-from enum import Enum as PyEnum
 from database import Base
+from enum import Enum as PyEnum
+from sqlalchemy.orm import relationship
+from sqlalchemy import Boolean, Column, Integer, ForeignKey, Enum, Table
 
 class ChatEventType(PyEnum):
     MESSAGE = 0

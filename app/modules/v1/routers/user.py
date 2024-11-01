@@ -1,20 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 from database import get_db
+from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException
 
+from modules.v1.dto.user import UserBase
 from modules.v1.services import user as UserService
-from modules.v1.dto.user import UserBase, UserCreate
 
 router = APIRouter()
-
-@router.post(
-    path='/v1/user/',
-    tags={"User"},
-    summary="Create new user",
-    response_model=UserCreate
-)
-async def create(data: UserCreate = None, db: Session = Depends(get_db)):
-    return UserService.create_user(data, db)
 
 @router.get(
     path='/v1/user/{id}',
@@ -35,8 +26,8 @@ async def get(id: int, db: Session = Depends(get_db)):
     summary="Change user info",
     response_model=UserBase
 )
-async def update(id: int, data: UserBase = None, db: Session = Depends(get_db)):
-    user = UserService.update(data, id, db)
+async def update(data: UserBase = None, db: Session = Depends(get_db)):
+    user = UserService.update(data, db)
     if user:
         return user
     

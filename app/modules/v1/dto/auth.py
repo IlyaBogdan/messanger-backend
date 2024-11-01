@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, field_validator
 
 class AuthRequest(BaseModel):
     email: str
-    password: str = Field(min_length=6, )
+    password: str
 
     @field_validator('password')
     def value_must_match_regex(cls, password):

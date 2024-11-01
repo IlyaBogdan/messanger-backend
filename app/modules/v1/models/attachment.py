@@ -1,6 +1,6 @@
-from sqlalchemy import Boolean, Column, Integer, String, Enum, ForeignKey
-from enum import Enum as PyEnum
 from database import Base
+from enum import Enum as PyEnum
+from sqlalchemy import Boolean, Column, Integer, String, Enum, ForeignKey
 
 class AttachmentEnum(PyEnum):
     PHOTO = 1
