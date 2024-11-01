@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 
 from modules.v1.services import user as UserService
-from modules.v1.dto import user as UserDto
+from modules.v1.dto.user import UserBase, UserCreate
 
 router = APIRouter()
 
@@ -11,16 +11,16 @@ router = APIRouter()
     path='/v1/user/',
     tags={"User"},
     summary="Create new user",
-    response_model=UserDto.User
+    response_model=UserCreate
 )
-async def create(data: UserDto.User = None, db: Session = Depends(get_db)):
+async def create(data: UserCreate = None, db: Session = Depends(get_db)):
     return UserService.create_user(data, db)
 
 @router.get(
     path='/v1/user/{id}',
     tags={"User"},
     summary="Get user by ID",
-    response_model=UserDto.User
+    response_model=UserBase
 )
 async def get(id: int, db: Session = Depends(get_db)):
     user = UserService.get_user(id, db)
@@ -33,9 +33,9 @@ async def get(id: int, db: Session = Depends(get_db)):
     path='/v1/user/{id}',
     tags={"User"},
     summary="Change user info",
-    response_model=UserDto.User
+    response_model=UserBase
 )
-async def update(id: int, data: UserDto.User = None, db: Session = Depends(get_db)):
+async def update(id: int, data: UserBase = None, db: Session = Depends(get_db)):
     user = UserService.update(data, id, db)
     if user:
         return user
@@ -47,7 +47,7 @@ async def update(id: int, data: UserDto.User = None, db: Session = Depends(get_d
     tags={"User"},
     summary="Remove user by ID",
     description="Soft removal is used",
-    response_model=UserDto.User
+    response_model=UserBase
 )
 async def delete(id: int, db: Session = Depends(get_db)):
     user = UserService.remove(id, db)
