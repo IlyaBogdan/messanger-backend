@@ -53,3 +53,35 @@ def remove(id: int, db: Session) -> Optional[User]:
         db.commit()
         db.refresh(user)
         return user
+    
+def add_to_friends(user: User, friend: User, db: Session) -> bool:
+    """Add another user to friends
+
+    Parameters
+    ----------
+    user: User
+        User model
+    friend: User
+        Another user
+    db: Session
+        Database connection
+    """
+    user.friends.append(friend)
+    db.commit()
+    return True
+
+def delete_friend(user: User, friend: User, db: Session) -> bool:
+    """Delete another user from friends
+
+    Parameters
+    ----------
+    user: User
+        User model
+    friend: User
+        Another user
+    db: Session
+        Database connection
+    """
+    user.friends.remove(friend)
+    db.commit()
+    return True
