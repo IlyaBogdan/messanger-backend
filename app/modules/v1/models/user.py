@@ -14,6 +14,7 @@ class User(Base):
     password = Column(String(length=255), comment="User's password")
     is_deleted = Column(Boolean, default=False, comment="Soft delete for model")
 
+    """List of user's friends"""
     friends = relationship(
         "User",
         secondary="friends_association",

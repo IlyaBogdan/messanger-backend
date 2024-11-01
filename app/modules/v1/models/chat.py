@@ -12,20 +12,20 @@ class Chat(Base):
     title = Column(String, unique=True, index=True, comment="Title of chat")
     is_deleted = Column(Boolean, default=False, comment="Soft delete for model")
 
+    """List of events in this chat"""
     events = relationship(
         "ChatEvent",
         secondary="events_association",
         primaryjoin="Chat.id==events_association.c.chat_id",
         backref="chat",
-        comment="List of events in this chat"
     )
 
+    """List of users in this chat"""
     users = relationship(
         "User",
         secondary="users_association",
         primaryjoin="Chat.id==users_association.c.chat_id",
         backref="chats",
-        comment="List of users in this chat"
     )
 
 """

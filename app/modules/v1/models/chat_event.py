@@ -25,12 +25,12 @@ class ChatEvent(Base):
     initiator = relationship("User", foreign_keys=[initiator_id])
     receiver = relationship("User", foreign_keys=[receiver_id])
 
+    """List of browsed this event users"""
     browsed_users = relationship(
         "User",
         secondary="browsed_users",
         primaryjoin="User.id==browsed_users.c.user_id",
         backref="browsed_events",
-        comment="List of browsed this event users"
     )
 
 """

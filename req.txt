@@ -4,3 +4,6 @@ sqlalchemy==2.0.36
 typing_extensions==4.12.2
 pydantic==2.9.2
 psycopg2-binary==2.9.10
+email_validator==2.2.0
+pytest==8.3.3
+alembic==1.13.3
