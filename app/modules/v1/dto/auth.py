@@ -1,9 +1,9 @@
 import re
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, EmailStr
 
 class AuthRequest(BaseModel):
-    email: str
-    password: str
+    email: EmailStr = Field(description="User's email", examples=["someemail@email.com"])
+    password: str = Field(description="User's password", examples=["Secutity&123"])
 
     @field_validator('password')
     def value_must_match_regex(cls, password):
@@ -14,8 +14,8 @@ class AuthRequest(BaseModel):
         return password
 
 class AuthResponse(BaseModel):
-    accessToken: str
-    refreshToken: str
+    accessToken: str = Field(description="Access token", examples=["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.DQ2MTgyNX0.4mB2SICM3gK59bByG7S3EGrvkTunk0u5zBRkj-flswA"])
+    refreshToken: str = Field(description="Refresh token", examples=["eyJhbGciOiJJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzb21lZW1haWwxQGdtYWlsLmNvbSIsImV4cCIaeTc1A"])
 
 class RefreshToken(BaseModel):
-    refreshToken: str
+    refreshToken: str = Field(description="Refresh token", examples=["eyJhbGciOiJJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzb21lZW1haWwxQGdtYWlsLmNvbSIsImV4cCIaeTc1A"])
