@@ -1,5 +1,6 @@
 from typing import Optional
 from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
 
 from modules.v1.models.user import User
 from modules.v1.dto.user import UserBase
@@ -65,8 +66,17 @@ def add_to_friends(user: User, friend: User, db: Session) -> bool:
         Another user
     db: Session
         Database connection
+
+    Raises
+    ------
+    HTTPException: 409
+        If user already in friend list
     """
+    if friend in user.friends:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already in friend list")
+    
     user.friends.append(friend)
+    friend.friends.append(user)
     db.commit()
     return True
 
@@ -81,7 +91,16 @@ def delete_friend(user: User, friend: User, db: Session) -> bool:
         Another user
     db: Session
         Database connection
+
+    Raises
+    ------
+    HTTPException: 409
+        If user not in friend list
     """
+    if friend not in user.friends:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User not in friend list")
+    
     user.friends.remove(friend)
+    friend.friends.remove(user)
     db.commit()
     return True

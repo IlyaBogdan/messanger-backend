@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from modules.v1.dto.user import UserBase, AddFriend
 from modules.v1.services import user as UserService
+from modules.v1.services import auth as AuthService
 
 router = APIRouter()    
 
@@ -32,7 +33,7 @@ async def update(data: UserBase, db: Session = Depends(get_db)):
     if user:
         return user
     
-    raise HTTPException(status_code=404, detail=f"User with id {id} not found")
+    raise HTTPException(status_code=404, detail=f"User with id {data.id} not found")
 
 @router.delete(
     path='/v1/user/{id}',
@@ -50,52 +51,37 @@ async def delete(id: int, db: Session = Depends(get_db)):
 
 @router.get(
     path='/v1/user/friends/get-all',
-    tags={"User"},
+    tags={"UserFriends"},
     summary="Get user friends",
     response_model=List[UserBase]
 )
-async def friends(db: Session = Depends(get_db)):
-    id_ = 7
-    user = UserService.get_user(id_, db)
-    if user:
-        return user.friends
-    
-    raise HTTPException(status_code=404, detail=f"User with id {id_} not found")
+async def friends(db: Session = Depends(get_db), user: dict = Depends(AuthService.get_current_user)):
+    return user.friends
 
 @router.post(
     path='/v1/user/friends/add-friend',
-    tags={"User"},
+    tags={"UserFriends"},
     summary="Add user to friends",
     response_model=dict
 )
-async def add_to_friends(data: AddFriend, db: Session = Depends(get_db)):
-    id_ = 7
-    user = UserService.get_user(id_, db)
-    if not user:
-        raise HTTPException(status_code=404, detail=f"User with id {id_} not found")
-    
-    friend = UserService.get_user(data.friend_id, db)
-    if not friend:
-        raise HTTPException(status_code=404, detail=f"User with id {data.friend_id} not found")
-    
-    UserService.add_to_friends(user, friend, db)
-    return { "success": True }
+async def add_to_friends(data: AddFriend, db: Session = Depends(get_db), user: dict = Depends(AuthService.get_current_user)):
+    if data.friend_id != user.id:
+        friend = UserService.get_user(data.friend_id, db)
+        if not friend:
+            raise HTTPException(status_code=404, detail=f"User with id {data.friend_id} not found")
+        
+        return { "success": UserService.add_to_friends(user, friend, db) }
 
 @router.delete(
     path='/v1/user/friends/delete-friend',
-    tags={"User"},
+    tags={"UserFriends"},
     summary="Delete user from friend list",
     response_model=dict
 )
-async def delete_friend(data: AddFriend, db: Session = Depends(get_db)):
-    id_ = 7
-    user = UserService.get_user(id_, db)
-    if not user:
-        raise HTTPException(status_code=404, detail=f"User with id {id_} not found")
-    
-    friend = UserService.get_user(data.friend_id, db)
-    if not friend:
-        raise HTTPException(status_code=404, detail=f"User with id {data.friend_id} not found")
-    
-    UserService.delete_friend(user, friend, db)
-    return { "success": True }
+async def delete_friend(data: AddFriend, db: Session = Depends(get_db), user: dict = Depends(AuthService.get_current_user)):
+    if data.friend_id != user.id:
+        friend = UserService.get_user(data.friend_id, db)
+        if not friend:
+            raise HTTPException(status_code=404, detail=f"User with id {data.friend_id} not found")
+        
+        return { "success": UserService.delete_friend(user, friend, db) }

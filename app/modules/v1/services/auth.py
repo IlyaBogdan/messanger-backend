@@ -4,12 +4,13 @@ from sqlalchemy import exc
 from typing import Optional
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
-from fastapi import HTTPException, status
 from jwt.exceptions import InvalidTokenError
 from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta, timezone
+from fastapi import HTTPException, status, Request, Depends
 
 from modules.v1.dto import auth
+from database import get_db
 from modules.v1.models.user import User
 
 
@@ -37,7 +38,7 @@ def create_token(data: dict, expires_delta: timedelta):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def verify_token(token: str, db: Session):
+def verify_token(token: str, db: Session) -> User:
     """Verify access token
 
     Parameters
@@ -63,6 +64,28 @@ def verify_token(token: str, db: Session):
     if user is None:
         raise credentials_exception
     
+    return user
+
+async def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
+    """Get user in current request
+
+    Parameters
+    ----------
+    request: Request
+        Current request instance
+    """
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authorization header missing")
+
+    scheme, token = auth_header.split()
+    if scheme.lower() != "bearer":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication scheme")
+
+    user = verify_token(token, db)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+
     return user
 
 def authorize(user: User) -> auth.AuthResponse:
