@@ -103,10 +103,10 @@ def create_friend_request(data: CreateFriendRequest, user: User, db: Session) ->
     try:
         existing_request_for_initiator = db.query(FriendRequest).filter(FriendRequest.initiator_id==user.id, FriendRequest.receiver_id==data.friendId).first()
         if existing_request_for_initiator:
-            raise exc.IntegrityError
+            raise exc.IntegrityError(db, {}, None)
         existing_request_for_reciever = db.query(FriendRequest).filter(FriendRequest.receiver_id==user.id, FriendRequest.initiator_id==data.friendId).first()
         if existing_request_for_reciever:
-            raise exc.IntegrityError
+            raise exc.IntegrityError(db, {}, None)
         
         request = FriendRequest()
         request.receiver = UserService.get_user(data.friendId, db)
@@ -144,7 +144,6 @@ def set_friend_request_status(data: SetFriendRequestStatus, user: User, db: Sess
     if request:
         if request.status != data.status:
             request.status = data.status
-            request.status = datetime.now(timezone.utc)
 
             if request.status == FriendRequestStatus.APPROVED.value:
                 add_to_friends(user, request.initiator, db)
