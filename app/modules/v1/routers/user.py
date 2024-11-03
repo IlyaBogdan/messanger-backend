@@ -15,7 +15,7 @@ router = APIRouter()
     summary="Get user by ID",
     response_model=UserBase
 )
-async def get(
+async def get_user_by_id(
     id: int,
     db: Session = Depends(get_db),
     token: str = Depends(oauth2_scheme)
@@ -32,7 +32,7 @@ async def get(
     summary="Change user info",
     response_model=UserBase
 )
-async def update(
+async def update_profile(
     data: UserBase,
     db: Session = Depends(get_db),
     token: str = Depends(oauth2_scheme)
@@ -50,7 +50,7 @@ async def update(
     description="Soft removal is used",
     response_model=UserBase
 )
-async def delete(
+async def delete_user(
     id: int,
     db: Session = Depends(get_db),
     token: str = Depends(oauth2_scheme)

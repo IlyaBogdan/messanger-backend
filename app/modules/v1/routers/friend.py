@@ -20,7 +20,7 @@ router = APIRouter()
     summary="Get user friends",
     response_model=List[UserBase]
 )
-async def friends(
+async def friend_list(
     db: Session = Depends(get_db),
     user: User = Depends(AuthService.get_current_user),
     token: str = Depends(oauth2_scheme)

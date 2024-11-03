@@ -1,3 +1,4 @@
 __pycache__
 sql_app.db
 build_env/docker-compose/local/postgres/*
+app/.pytest_cache

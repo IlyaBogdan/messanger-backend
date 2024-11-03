@@ -11,4 +11,4 @@ COPY ./app .
 RUN apk update \
     && apk add bash \
     && pip install --upgrade pip \
-    && pip install --no-cache-dir -r req.txt
+    && pip install --no-cache-dir -r req.txt --use-deprecated=legacy-resolver
