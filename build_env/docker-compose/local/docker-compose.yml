@@ -6,7 +6,7 @@ services:
     build:
       context: ../../..
       dockerfile: build_env/docker-compose/local/Dockerfile
-    command: ash -c "python main.py"
+    command: ash -c "alembic upgrade head && python main.py"
     volumes:
       - ../../../app:/usr/src/app/
     ports:

@@ -1,9 +1,9 @@
 from database import Base
-from enum import Enum as PyEnum
+from enum import IntEnum
 from sqlalchemy.orm import relationship
-from sqlalchemy import Boolean, Column, Integer, ForeignKey, Enum, Table
+from sqlalchemy import Boolean, Column, Integer, ForeignKey, Table, CheckConstraint
 
-class ChatEventType(PyEnum):
+class ChatEventType(IntEnum):
     MESSAGE = 0
     CALL = 1
 
@@ -17,7 +17,7 @@ class ChatEvent(Base):
     chat_id = Column(Integer, ForeignKey('chats.id'), comment="Event's chat")
     initiator_id = Column(Integer, ForeignKey('users.id'), comment="Event's initiator. Sender of message")
     receiver_id = Column(Integer, ForeignKey('users.id'), comment="Event's receiver. Receiver of message")
-    type = Column(Enum(ChatEventType), nullable=False, comment="Type of event")
+    type = Column(Integer, nullable=False, comment="Type of event")
     browsed = Column(Boolean, default=False, comment="If receiver of event browsed this event")
     is_deleted = Column(Boolean, default=False, comment="Soft delete for model")
 
@@ -31,6 +31,10 @@ class ChatEvent(Base):
         secondary="browsed_users",
         primaryjoin="User.id==browsed_users.c.user_id",
         backref="browsed_events",
+    )
+
+    __table_args__ = (
+        CheckConstraint(f"status IN ({ChatEventType.CALL}, {ChatEventType.MESSAGE})", name="check_type"),
     )
 
 """

@@ -5,10 +5,11 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi import APIRouter, Depends, HTTPException
 
 from modules.v1.models.user import User
-from modules.v1.dto.user import UserBase, AddFriend
+from modules.v1.dto.user import UserBase
 from modules.v1.services import user as UserService
 from modules.v1.services import auth as AuthService
 from modules.v1.services import friend as FriendService
+from modules.v1.dto.friend import SetFriendRequestStatus, CreateFriendRequest
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="v1/auth/login")
 router = APIRouter()    
@@ -27,23 +28,37 @@ async def friends(
     return user.friends
 
 @router.post(
-    path='/v1/friends/add',
+    path='/v1/friends/friend-request',
     tags={"UserFriends"},
-    summary="Add user to friends",
+    summary="Create request to add user to friends",
     response_model=dict
 )
-async def add_to_friends(
-    data: AddFriend,
+async def add_to_friends_request(
+    data: CreateFriendRequest,
     db: Session = Depends(get_db),
     user: User = Depends(AuthService.get_current_user),
     token: str = Depends(oauth2_scheme)
 ):
-    if data.friend_id != user.id:
-        friend = UserService.get_user(data.friend_id, db)
+    if data.friendId != user.id:
+        friend = UserService.get_user(data.friendId, db)
         if not friend:
-            raise HTTPException(status_code=404, detail=f"User with id {data.friend_id} not found")
+            raise HTTPException(status_code=404, detail=f"User with id {data.friendId} not found")
         
-        return { "success": FriendService.add_to_friends(user, friend, db) }
+        return { "success": FriendService.create_friend_request(data, user, db) }
+    
+@router.post(
+    path='/v1/friends/friends-request/set-status',
+    tags={"UserFriends"},
+    summary="Set status of friend request",
+    response_model=dict
+)
+async def set_friend_request_status(
+    data: SetFriendRequestStatus,
+    db: Session = Depends(get_db),
+    user: User = Depends(AuthService.get_current_user),
+    token: str = Depends(oauth2_scheme)
+):
+    return { "success": FriendService.set_friend_request_status(data, user, db) }
 
 @router.delete(
     path='/v1/friends/{friend_id}',

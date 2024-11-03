@@ -24,13 +24,13 @@ class ResetPasswordInit(BaseModel):
     email: EmailStr = Field(description="User's email", examples=["someemail@email.com"])
     
 class ChangePassword(BaseModel):
-    new_password: str = Field(description="User's password", examples=["Secutity&123"])
-    reset_token: str
+    newPassword: str = Field(description="User's password", examples=["Secutity&123"])
+    resetToken: str
 
-    @field_validator('new_password')
-    def value_must_match_regex(cls, new_password):
+    @field_validator('newPassword')
+    def value_must_match_regex(cls, newPassword):
         regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
-        if not re.match(regex, new_password):
+        if not re.match(regex, newPassword):
             raise ValueError('Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character')
 
-        return new_password
+        return newPassword

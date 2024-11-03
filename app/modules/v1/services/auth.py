@@ -231,10 +231,10 @@ def change_password(data: auth.ChangePassword, db: Session) -> bool:
     db: Session
         Database connection
     """
-    reset_token = db.query(ResetToken).filter(ResetToken.token == data.reset_token).first()
+    reset_token = db.query(ResetToken).filter(ResetToken.token == data.resetToken).first()
     if reset_token:
         user = UserService.get_user(reset_token.user_id, db)
-        user.password = get_password_hash(data.new_password)
+        user.password = get_password_hash(data.newPassword)
         db.delete(reset_token)
         for token in db.query(ResetToken).filter(ResetToken.user_id == user.id).all():
             db.delete(token)

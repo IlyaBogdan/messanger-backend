@@ -11,6 +11,7 @@ import modules.v1.models.chat_event
 import modules.v1.models.message
 import modules.v1.models.attachment
 import modules.v1.models.reset_token
+import modules.v1.models.friend_request
 
 config = context.config
 target_metadata = Base.metadata

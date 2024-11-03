@@ -1,13 +1,10 @@
-from typing import List
 from database import get_db
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import APIRouter, Depends, HTTPException
 
-from modules.v1.models.user import User
-from modules.v1.dto.user import UserBase, AddFriend
+from modules.v1.dto.user import UserBase
 from modules.v1.services import user as UserService
-from modules.v1.services import auth as AuthService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="v1/auth/login")
 router = APIRouter()    

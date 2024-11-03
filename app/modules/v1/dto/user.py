@@ -6,5 +6,3 @@ class UserBase(BaseModel):
     email: EmailStr = Field(description="User's email", examples=["someemail@email.com"])
     username: Optional[str] = Field(description="Username", examples=["Bill Joe", "Pedro Pascal"])
 
-class AddFriend(BaseModel):
-    friend_id: int = Field(description="Friend user ID", examples=[1, 2, 5])
