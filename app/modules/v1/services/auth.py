@@ -81,6 +81,7 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)) -> U
     if not auth_header:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authorization header missing")
 
+    print(auth_header)
     scheme, token = auth_header.split()
     if scheme.lower() != "bearer":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication scheme")
@@ -160,7 +161,7 @@ def registration(data: auth.AuthRequest, db: Session) -> Optional[auth.AuthRespo
         db.commit()
         db.refresh(user)
         return authorize(user)
-    except exc.IntegrityError:
+    except exc.IntegrityError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"User with email {data.email} already exists")
 
 def refresh_token(data: auth.RefreshToken, db: Session) -> auth.AuthResponse:

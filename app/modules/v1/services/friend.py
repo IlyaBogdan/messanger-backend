@@ -103,13 +103,22 @@ def create_friend_request(data: CreateFriendRequest, user: User, db: Session) ->
     try:
         existing_request_for_initiator = db.query(FriendRequest).filter(FriendRequest.initiator_id==user.id, FriendRequest.receiver_id==data.friendId).first()
         if existing_request_for_initiator:
+            if existing_request_for_initiator.status == FriendRequestStatus.APPROVED:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"User with id {data.friendId} already your friend")
             raise exc.IntegrityError(db, {}, None)
         existing_request_for_reciever = db.query(FriendRequest).filter(FriendRequest.receiver_id==user.id, FriendRequest.initiator_id==data.friendId).first()
         if existing_request_for_reciever:
+            if existing_request_for_reciever.status == FriendRequestStatus.APPROVED:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"User with id {data.friendId} already your friend")
             raise exc.IntegrityError(db, {}, None)
-        
+                
         request = FriendRequest()
         request.receiver = UserService.get_user(data.friendId, db)
+        if request.receiver.is_deleted:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id {data.friendId} not found")
+        if request.receiver in user.friends:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"User with id {data.friendId} already your friend")
+        
         request.initiator = user
         db.add(request)
         db.commit()
@@ -141,14 +150,17 @@ def set_friend_request_status(data: SetFriendRequestStatus, user: User, db: Sess
         FriendRequest.receiver_id==user.id,
         FriendRequest.id==data.requestId
     ).first()
-    if request:
-        if request.status != data.status:
-            request.status = data.status
+    if not request:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Friend request not found")
+    if request.status == data.status:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Request already has this status")
 
-            if request.status == FriendRequestStatus.APPROVED.value:
-                add_to_friends(user, request.initiator, db)
+    request.status = data.status
 
-            db.commit()
-            return True
+    if request.status == FriendRequestStatus.APPROVED.value:
+        add_to_friends(user, request.initiator, db)
 
-    return False
+    db.commit()
+    return True
+
+    
