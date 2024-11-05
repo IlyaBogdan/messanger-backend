@@ -21,5 +21,5 @@ def get_db():
         yield
     finally:
         print('Dropping test database...')
-        #drop_database(CONNECTION_STRING)
+        drop_database(CONNECTION_STRING)
         print('Database dropped.')

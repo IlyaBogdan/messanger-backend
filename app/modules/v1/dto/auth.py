@@ -12,6 +12,10 @@ class AuthRequest(BaseModel):
             raise ValueError('Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character')
 
         return password
+    
+class LoginDto(BaseModel):
+    email: EmailStr = Field(description="User's email", examples=["someemail@email.com"])
+    password: str = Field(description="User's password", examples=["Secutity&123"])
 
 class AuthResponse(BaseModel):
     accessToken: str = Field(description="Access token", examples=["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.DQ2MTgyNX0.4mB2SICM3gK59bByG7S3EGrvkTunk0u5zBRkj-flswA"])

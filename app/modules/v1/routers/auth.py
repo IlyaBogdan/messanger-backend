@@ -13,7 +13,7 @@ router = APIRouter()
     summary="Login",
     response_model=auth.AuthResponse
 )
-async def login(data: auth.AuthRequest, db: Session = Depends(get_db)):
+async def login(data: auth.LoginDto, db: Session = Depends(get_db)):
     return AuthService.login(data, db)
 
 @router.post(

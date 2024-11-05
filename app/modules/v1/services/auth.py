@@ -109,14 +109,14 @@ def authorize(user: User) -> auth.AuthResponse:
 
     return auth.AuthResponse(accessToken=access_token, refreshToken=refresh_token)
 
-def login(data: auth.AuthRequest, db: Session) -> Optional[auth.AuthResponse]:
+def login(data: auth.LoginDto, db: Session) -> Optional[auth.AuthResponse]:
     """Method for user login
 
     Check user credentionals and authorize him
 
     Parameters
     ----------
-    data: auth.AuthRequest
+    data: auth.LoginDto
         User's email and plain password
     db: Session
         Database connection
@@ -127,7 +127,7 @@ def login(data: auth.AuthRequest, db: Session) -> Optional[auth.AuthResponse]:
         If user with given email or password not exists
 
     """
-    user = db.query(User).filter(User.email == data.email).first()
+    user = db.query(User).filter(User.email == data.email, User.is_deleted == False).first()
     if not user or not verify_password(data.password, user.password):
         raise HTTPException(status_code=401, detail="Incorrect username or password")
     
